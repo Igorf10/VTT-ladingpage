@@ -1,0 +1,223 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="theme-color" content="#07080A" />
+  <meta name="description" content="VTT Store — camisas dry, shorts de compressão, leggings, moletons e corta vento da Vanilto Top Team. Compre pelo WhatsApp." />
+  <title>VTT Store — Vista o treino</title>
+  <link rel="icon" type="image/png" href="img/favicon-32x32.png" />
+  <link rel="stylesheet" href="css/style.css" />
+</head>
+<body>
+  <div class="lp">
+
+    <!-- ================= Topo ================= -->
+    <header class="lp-top">
+      <div class="container lp-top__bar">
+        <a href="#inicio" class="brand">
+          <img src="img/logo-vtt.png" alt="VTT — Vanilto Top Team" class="brand__logo" />
+          <span class="lp-top__name">VTT <span>Store</span></span>
+        </a>
+        <nav class="lp-top__nav">
+          <a href="#produtos">Produtos</a>
+          <a href="#cadastro">10% OFF</a>
+        </nav>
+        <a href="#" class="btn lp-btn-whats lp-top__whats" data-whats="pedido" target="_blank" rel="noopener noreferrer">
+          <svg class="ico-whats" width="16" height="16" aria-hidden="true"><use href="#i-whats" /></svg>
+          <span>Peça já aqui</span>
+        </a>
+      </div>
+    </header>
+
+    <!-- ================= Hero + cadastro ================= -->
+    <section class="hero lp-hero" id="inicio">
+      <img src="img/hero-fight-bg.webp" alt="" aria-hidden="true" class="hero__bg" />
+      <div class="hero__overlay" aria-hidden="true"></div>
+      <div class="container lp-hero__grid">
+        <div>
+          <p class="hero__eyebrow">VTT Store · Coleção Dry</p>
+          <h1 class="hero__title">Vista o treino.<br /><span>Vista a VTT.</span></h1>
+          <p class="hero__text">
+            Camisas, shorts de compressão, leggings, moletons e corta vento com a marca
+            da equipe. Escolha a peça e feche o pedido em minutos pelo WhatsApp.
+          </p>
+          <div class="lp-hero__actions">
+            <a href="#produtos" class="btn btn-primary">Ver produtos</a>
+            <span class="lp-hero__from">a partir de <strong id="preco-minimo"></strong></span>
+          </div>
+        </div>
+
+        <!-- Formulário de captação -->
+        <div id="cadastro">
+          <form class="lp-form" id="lead-form" novalidate>
+            <span class="lp-form__badge">10% OFF</span>
+            <h3 class="lp-form__title">Ganhe 10% na primeira compra</h3>
+            <p class="lp-form__text">
+              Cadastre-se e receba lançamentos, reposições e ofertas da VTT antes de todo mundo.
+            </p>
+
+            <div class="lp-field">
+              <label for="lp-email">E-mail</label>
+              <input id="lp-email" name="email" type="email" inputmode="email" autocomplete="email"
+                     placeholder="seuemail@exemplo.com" aria-describedby="lp-email-err" />
+              <p class="form-error" id="lp-email-err" hidden></p>
+            </div>
+
+            <div class="lp-field">
+              <label for="lp-phone">Celular (WhatsApp)</label>
+              <input id="lp-phone" name="whatsapp" type="tel" inputmode="numeric" autocomplete="tel-national"
+                     placeholder="(21) 99999-9999" maxlength="15" aria-describedby="lp-phone-err" />
+              <p class="form-error" id="lp-phone-err" hidden></p>
+            </div>
+
+            <!-- Honeypot anti-robô: escondido para pessoas -->
+            <input type="text" name="website" class="lp-hp" tabindex="-1" autocomplete="off" aria-hidden="true" />
+
+            <label class="lp-consent">
+              <input type="checkbox" id="lp-consent" checked />
+              <span>Aceito receber novidades e ofertas da VTT por e-mail e WhatsApp. Posso cancelar quando quiser.</span>
+            </label>
+            <p class="form-error" id="lp-consent-err" hidden></p>
+            <div class="lp-alert" id="lp-send-err" role="alert" hidden></div>
+
+            <button type="submit" class="btn btn-primary lp-form__submit">Quero meu desconto</button>
+          </form>
+
+          <!-- Só aparece quando a API confirma o cadastro -->
+          <div class="lp-form lp-form--done" id="lead-done" role="status" hidden>
+            <svg class="lp-form__done-icon" width="40" height="40" aria-hidden="true"><use href="#i-check" /></svg>
+            <h3 class="lp-form__title">Você está na lista VTT!</h3>
+            <p class="lp-form__text">Seu cupom de 10% OFF na primeira compra:</p>
+            <div class="lp-cupom" id="lead-cupom"></div>
+            <p class="lp-form__text">
+              Toque no botão abaixo: a mensagem com seu cupom já vai pronta para o WhatsApp da loja.
+            </p>
+            <a href="#" class="btn lp-btn-whats" id="btn-usar-desconto" target="_blank" rel="noopener noreferrer">
+              <svg width="18" height="18" aria-hidden="true"><use href="#i-whats" /></svg> Usar meu desconto
+            </a>
+            <a href="#produtos" class="lp-form__link">Ver os produtos</a>
+            <button type="button" class="lp-form__reset" id="lead-reset">Fazer outro cadastro</button>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ================= Benefícios ================= -->
+    <section class="benefits-bar">
+      <div class="container benefits-bar__grid">
+        <div class="benefit-item">
+          <svg class="benefit-item__icon" width="26" height="26" aria-hidden="true"><use href="#i-drop" /></svg>
+          <div><div class="benefit-item__title">Tecido dry</div><div class="benefit-item__text">Leve e de secagem rápida</div></div>
+        </div>
+        <div class="benefit-item">
+          <svg class="benefit-item__icon" width="26" height="26" aria-hidden="true"><use href="#i-palette" /></svg>
+          <div><div class="benefit-item__title">Verde ou rosa</div><div class="benefit-item__text">Duas versões de estampa</div></div>
+        </div>
+        <div class="benefit-item">
+          <svg class="benefit-item__icon" width="26" height="26" aria-hidden="true"><use href="#i-chat" /></svg>
+          <div><div class="benefit-item__title">Compra pelo WhatsApp</div><div class="benefit-item__text">Atendimento direto com a equipe</div></div>
+        </div>
+        <div class="benefit-item">
+          <svg class="benefit-item__icon" width="26" height="26" aria-hidden="true"><use href="#i-store" /></svg>
+          <div><div class="benefit-item__title">Retire na academia</div><div class="benefit-item__text">Ou receba em casa</div></div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ================= Produtos ================= -->
+    <section class="section container" id="produtos">
+      <div class="section__head">
+        <h2 class="section__title">Produtos disponíveis</h2>
+        <p class="section__hint">Toque em “Comprar no WhatsApp” e a mensagem já vai com o produto e o preço.</p>
+      </div>
+
+      <!-- Botões de categoria: gerados pelo js/main.js -->
+      <div class="category-bar lp-category-bar" id="categorias" role="tablist" aria-label="Categorias"></div>
+
+      <!-- Cards: gerados pelo js/main.js a partir do js/produtos.js -->
+      <div class="lp-grid" id="lista-produtos"></div>
+    </section>
+
+    <!-- ================= Como comprar ================= -->
+    <section class="lp-steps">
+      <div class="container">
+        <h2 class="section__title">Como comprar</h2>
+        <ol class="lp-steps__list">
+          <li class="lp-step">
+            <span class="lp-step__n">01</span>
+            <div><h3 class="lp-step__title">Escolha a peça</h3><p class="lp-step__text">Filtre pela categoria e veja o preço de cada modelo.</p></div>
+          </li>
+          <li class="lp-step">
+            <span class="lp-step__n">02</span>
+            <div><h3 class="lp-step__title">Chame no WhatsApp</h3><p class="lp-step__text">O botão já abre a conversa com o produto escolhido.</p></div>
+          </li>
+          <li class="lp-step">
+            <span class="lp-step__n">03</span>
+            <div><h3 class="lp-step__title">Combine e receba</h3><p class="lp-step__text">Tamanho, cor, pagamento e entrega direto com a equipe.</p></div>
+          </li>
+        </ol>
+      </div>
+    </section>
+
+    <!-- ================= CTA final ================= -->
+    <section class="lp-final">
+      <div class="container lp-final__inner">
+        <div>
+          <h2 class="lp-final__title">Ainda não se cadastrou?</h2>
+          <p class="lp-final__text">Garanta 10% OFF na primeira compra em menos de 30 segundos.</p>
+        </div>
+        <a href="#cadastro" class="btn btn-primary">Quero 10% OFF</a>
+      </div>
+    </section>
+
+    <footer class="lp-footer">
+      <div class="container lp-footer__inner">
+        <span>© <span id="ano"></span> VTT — Vanilto Top Team</span>
+        <span>Desenvolvido por: GardData</span>
+      </div>
+    </footer>
+
+    <!-- WhatsApp flutuante -->
+    <a href="#" class="lp-float" data-whats="duvida" target="_blank" rel="noopener noreferrer" aria-label="Falar no WhatsApp">
+      <svg width="28" height="28" aria-hidden="true"><use href="#i-whats" /></svg>
+    </a>
+  </div>
+
+  <!-- ================= Ícones (SVG sprite) ================= -->
+  <svg width="0" height="0" style="position:absolute" aria-hidden="true">
+    <defs>
+      <!-- Ícone estilizado do WhatsApp (não é o logo oficial) -->
+      <symbol id="i-whats" viewBox="0 0 24 24">
+        <path fill="currentColor" d="M12.04 2C6.58 2 2.13 6.45 2.13 11.91c0 1.75.46 3.39 1.26 4.81L2 22l5.41-1.36a9.9 9.9 0 0 0 4.63 1.15h.01c5.46 0 9.9-4.45 9.9-9.91C21.96 6.45 17.51 2 12.04 2zm0 18.02h-.01a8.1 8.1 0 0 1-4.13-1.13l-.3-.18-3.07.77.82-2.99-.2-.31a8.13 8.13 0 0 1-1.25-4.28c0-4.5 3.66-8.16 8.15-8.16 2.18 0 4.22.85 5.76 2.4a8.09 8.09 0 0 1 2.39 5.77c0 4.5-3.67 8.11-8.16 8.11zm4.47-6.1c-.24-.12-1.44-.71-1.66-.79-.22-.08-.39-.12-.55.12-.16.24-.63.79-.78.95-.14.16-.29.18-.53.06-.24-.12-1.03-.38-1.96-1.21-.72-.65-1.21-1.44-1.35-1.68-.14-.24-.02-.37.11-.49.11-.11.24-.29.36-.43.12-.14.16-.24.24-.4.08-.16.04-.31-.02-.43-.06-.12-.55-1.33-.76-1.82-.2-.48-.4-.42-.55-.42-.14-.01-.31-.01-.47-.01-.16 0-.43.06-.65.31-.22.24-.86.84-.86 2.05 0 1.21.88 2.38 1 2.54.12.16 1.73 2.64 4.19 3.7.59.25 1.04.4 1.4.52.59.19 1.12.16 1.54.1.47-.07 1.44-.59 1.64-1.15.2-.57.2-1.05.14-1.15-.06-.1-.22-.16-.46-.28z" />
+      </symbol>
+      <symbol id="i-check" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <circle cx="12" cy="12" r="10" /><path d="m9 12 2 2 4-4" />
+      </symbol>
+      <symbol id="i-drop" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M7 16.3c2.2 0 4-1.83 4-4.05 0-1.16-.57-2.26-1.71-3.19S7.29 6.75 7 5.3c-.29 1.45-1.14 2.84-2.29 3.76S3 11.1 3 12.25c0 2.22 1.8 4.05 4 4.05z" />
+        <path d="M12.56 6.6A10.97 10.97 0 0 0 14 3.02c.5 2.5 2 4.9 4 6.5s3 3.5 3 5.5a6.98 6.98 0 0 1-11.91 4.97" />
+      </symbol>
+      <symbol id="i-palette" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <circle cx="13.5" cy="6.5" r="1" fill="currentColor" /><circle cx="17.5" cy="10.5" r="1" fill="currentColor" />
+        <circle cx="8.5" cy="7.5" r="1" fill="currentColor" /><circle cx="6.5" cy="12.5" r="1" fill="currentColor" />
+        <path d="M12 2C6.5 2 2 6.5 2 12s4.5 10 10 10c.93 0 1.65-.75 1.65-1.69 0-.44-.18-.84-.44-1.13-.29-.29-.44-.65-.44-1.13a1.64 1.64 0 0 1 1.67-1.67h2c3.05 0 5.55-2.5 5.55-5.55C21.97 6.01 17.46 2 12 2z" />
+      </symbol>
+      <symbol id="i-chat" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M7.9 20A9 9 0 1 0 4 16.1L2 22Z" />
+      </symbol>
+      <symbol id="i-store" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <path d="m2 7 4.41-4.41A2 2 0 0 1 7.83 2h8.34a2 2 0 0 1 1.42.59L22 7" />
+        <path d="M4 12v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8" />
+        <path d="M15 22v-4a2 2 0 0 0-2-2h-2a2 2 0 0 0-2 2v4" />
+        <path d="M2 7h20" />
+        <path d="M22 7v3a2 2 0 0 1-2 2 2.7 2.7 0 0 1-1.59-.63.7.7 0 0 0-.82 0A2.7 2.7 0 0 1 16 12a2.7 2.7 0 0 1-1.59-.63.7.7 0 0 0-.82 0A2.7 2.7 0 0 1 12 12a2.7 2.7 0 0 1-1.59-.63.7.7 0 0 0-.82 0A2.7 2.7 0 0 1 8 12a2.7 2.7 0 0 1-1.59-.63.7.7 0 0 0-.82 0A2.7 2.7 0 0 1 4 12a2 2 0 0 1-2-2V7" />
+      </symbol>
+    </defs>
+  </svg>
+
+  <script src="js/config.js"></script>
+  <script src="js/produtos.js"></script>
+  <script src="js/main.js"></script>
+</body>
+</html>
