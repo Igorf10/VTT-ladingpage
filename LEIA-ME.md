@@ -6,9 +6,9 @@ Não precisa de Node, npm nem build.
 vtt-landing-html/
 ├── index.html          → a página
 ├── css/style.css       → todo o visual
-├── js/config.js        → número do WhatsApp e URL da planilha  ← edite aqui
+├── js/config.js        → WhatsApp, % de desconto e URL da planilha  ← edite aqui
 ├── js/produtos.js      → produtos, preços e categorias        ← edite aqui
-├── js/main.js          → filtros, cards, máscara e envio do cadastro
+├── js/main.js          → filtros, cards, carrinho, cupom e envio do cadastro
 ├── img/                → logo, fundo e fotos dos produtos
 └── apps-script/Code.gs → código da planilha (vai no Google, não no site)
 ```
@@ -30,7 +30,7 @@ Enquanto `leadsUrl` estiver vazio em `js/config.js`, a página roda em **modo te
 
 | Situação | Resposta | O que a página mostra |
 |---|---|---|
-| Cadastro novo | `{ ok: true, cupom: "VTT10-AB3K9" }` | Tela de sucesso com o cupom e o botão **Usar meu desconto** |
+| Cadastro novo | `{ ok: true, cupom: "VTT10-AB3K9" }` | Tela de sucesso com o cupom e o botão **Copiar código** |
 | E-mail já existe | `{ ok: false, codigo: "ja_cadastrado", erros: { email: "E-mail já cadastrado." } }` | Erro no campo, cadastro bloqueado e **nenhum botão de desconto** |
 | Telefone já existe | `{ ok: false, codigo: "ja_cadastrado", erros: { whatsapp: "Telefone já cadastrado." } }` | Igual ao caso acima |
 | Os dois já existem | os dois erros juntos | Igual ao caso acima |
@@ -80,27 +80,36 @@ Quando o script é aberto pela planilha, também aparece um menu **VTT > Criar/v
 |---|---|---|---|
 | 06/10/2026 14:32 | cliente@email.com | (21) 99999-9999 | ☐ |
 
-Quando o cliente chamar no WhatsApp, a mensagem já traz o e-mail e o número dele. Procure um dos dois na planilha com Ctrl+F e marque **Cupom usado?** depois da venda.
+Quando o cliente mandar o pedido com cupom, peça o e-mail ou o número do cadastro, procure na planilha com Ctrl+F e marque **Cupom usado?** depois da venda.
 
-O código do cupom (ex.: VTT10-AB3K9) aparece para o cliente e vai na mensagem, mas não é gravado na planilha. A conferência é feita pelo e-mail ou WhatsApp.
+O código do cupom (ex.: VTT10-AB3K9) aparece para o cliente e vai na mensagem do pedido, mas não é gravado na planilha. A conferência é feita pelo e-mail ou WhatsApp.
 
 > **Já tinha rodado a versão anterior?** O script ajusta a aba sozinho. Se a aba "Leads" só tinha o cabeçalho antigo, ele é trocado pelo novo. Se já havia cadastros nela, a aba é renomeada para **"Leads (antigo)"** e uma "Leads" nova é criada com as 4 colunas. Os cadastros da aba antiga não entram na checagem de duplicados.
 
-### Mensagem automática do botão "Usar meu desconto"
+## Carrinho e código promocional
 
-O botão só aparece depois que a API confirma o cadastro. Ele abre o WhatsApp da loja com esta mensagem pronta:
+- Cada card tem o seletor de quantidade (− 1 +) e o botão **Adicionar**. O ícone do carrinho no topo mostra quantas peças foram adicionadas.
+- A janela do carrinho lista os itens com quantidade editável, subtotal de cada produto, subtotal geral, desconto e total.
+- Depois do cadastro, o cliente toca em **Copiar código** e cola o cupom no campo **Código promocional** do carrinho. O desconto (10%, configurável em `descontoPercentual` no `js/config.js`) entra no total.
+- O carrinho fica salvo no navegador (`vtt_carrinho` no Local Storage), então não se perde ao recarregar a página.
+- **Finalizar pedido no WhatsApp** abre a conversa com o pedido pronto:
 
 ```
-Olá, VTT Store! Acabei de me cadastrar no site e quero usar meu desconto de 10% na primeira compra.
+Olá, VTT Store! Quero fazer este pedido pelo site:
 
-*Cupom:* VTT10-AB3K9
-*E-mail:* cliente@email.com
-*WhatsApp:* (21) 99999-9999
+• 3x Camisa e Regata Dry — R$ 179,70
+• 1x Corta Vento VTT — R$ 129,90
 
-Pode me ajudar a escolher os produtos?
+Subtotal: R$ 309,60
+Cupom VTT10-AB3K9 (10% OFF): − R$ 30,96
+*Total: R$ 278,64*
+
+Pode me passar os tamanhos e cores disponíveis?
 ```
 
-O texto pode ser alterado na função `mensagemDesconto` em `js/main.js`.
+> **Importante:** como o código do cupom não é gravado na planilha, a página só confere se ele está no formato certo (`VTT10-` + 5 caracteres). A conferência de que o cliente realmente se cadastrou continua sendo feita pela loja, procurando o e-mail ou o WhatsApp dele na planilha antes de dar o desconto e marcando **Cupom usado?**.
+
+O texto da mensagem pode ser alterado na função `mensagemPedido` em `js/main.js`.
 
 ### Modo teste (sem planilha)
 

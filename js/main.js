@@ -6,6 +6,11 @@
   var PRODUTOS = window.VTT_PRODUTOS;
   var CATEGORIAS = window.VTT_CATEGORIAS;
   var STORAGE_TESTE = 'vtt_leads_teste';   // "planilha" falsa do modo teste
+  var STORAGE_CARRINHO = 'vtt_carrinho';    // carrinho salvo no navegador
+  var QTD_MAX = 99;
+  var DESCONTO = (CONFIG.descontoPercentual || 10) / 100;
+  // Mesmo formato do Code.gs: VTT10- + 5 caracteres (sem O, 0, I, 1)
+  var FORMATO_CUPOM = /^VTT10-[A-HJ-NP-Z2-9]{5}$/;
 
   /* ---------------- Utilitários ---------------- */
 
@@ -53,6 +58,16 @@
     try { localStorage.setItem(chave, JSON.stringify(valor)); } catch (e) { /* navegação anônima */ }
   }
 
+  // Cada produto ganha um id a partir do nome (ex.: "corta-vento-vtt")
+  PRODUTOS.forEach(function (p) {
+    p.id = p.id || p.nome.normalize('NFD').replace(/[\u0300-\u036f]/g, '')
+      .toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '');
+  });
+
+  function produtoPorId(id) {
+    return PRODUTOS.find(function (p) { return p.id === id; });
+  }
+
   /* ---------------- Links de WhatsApp fixos ---------------- */
 
   var MENSAGENS = {
@@ -79,15 +94,9 @@
   var listaProdutos = document.getElementById('lista-produtos');
   var categoriaAtiva = 'Todos';
 
-  function mensagemCompra(p) {
-    return 'Olá! Vim pelo site da VTT Store e quero comprar:\n\n' +
-      '*' + p.nome + '* — ' + formatarPreco(p.preco) + '\n\n' +
-      'Pode me passar os tamanhos e cores disponíveis?';
-  }
-
   function cardProduto(p) {
     return (
-      '<article class="lp-card">' +
+      '<article class="lp-card" data-id="' + escapar(p.id) + '">' +
         '<div class="lp-card__media">' +
           '<img src="' + escapar(p.imagem) + '" alt="' + escapar(p.nome) + '" loading="lazy" />' +
           '<span class="lp-card__tag">' + escapar(p.categoria) + '</span>' +
@@ -96,13 +105,32 @@
           '<h3 class="lp-card__name">' + escapar(p.nome) + '</h3>' +
           '<p class="lp-card__desc">' + escapar(p.descricao) + '</p>' +
           '<div class="lp-card__price">' + formatarPreco(p.preco) + '</div>' +
-          '<a href="' + linkWhatsApp(mensagemCompra(p)) + '" target="_blank" rel="noopener noreferrer" ' +
-            'class="btn lp-btn-whats" aria-label="Comprar ' + escapar(p.nome) + ' pelo WhatsApp">' +
-            '<svg width="18" height="18" aria-hidden="true"><use href="#i-whats" /></svg> Comprar no WhatsApp' +
-          '</a>' +
+          '<div class="lp-card__buy">' +
+            seletorQtd(1, 'Quantidade de ' + p.nome) +
+            '<button type="button" class="btn btn-primary lp-card__add" data-add="' + escapar(p.id) + '">' +
+              '<svg width="18" height="18" aria-hidden="true"><use href="#i-cart" /></svg> Adicionar' +
+            '</button>' +
+          '</div>' +
         '</div>' +
       '</article>'
     );
+  }
+
+  // Seletor de quantidade (− 1 +) usado no card e no carrinho
+  function seletorQtd(valor, rotulo) {
+    return (
+      '<div class="qty" role="group" aria-label="' + escapar(rotulo) + '">' +
+        '<button type="button" class="qty__btn" data-qtd="-1" aria-label="Diminuir">−</button>' +
+        '<input class="qty__input" type="number" inputmode="numeric" min="1" max="' + QTD_MAX + '" value="' + valor + '" aria-label="Quantidade" />' +
+        '<button type="button" class="qty__btn" data-qtd="1" aria-label="Aumentar">+</button>' +
+      '</div>'
+    );
+  }
+
+  function limitarQtd(n) {
+    n = parseInt(n, 10);
+    if (isNaN(n) || n < 1) return 1;
+    return Math.min(n, QTD_MAX);
   }
 
   function renderizarProdutos() {
@@ -110,6 +138,7 @@
       ? PRODUTOS
       : PRODUTOS.filter(function (p) { return p.categoria === categoriaAtiva; });
     listaProdutos.innerHTML = visiveis.map(cardProduto).join('');
+    if (typeof Carrinho !== 'undefined') sincronizarCards(Carrinho.qtdDe);
   }
 
   function renderizarCategorias() {
@@ -130,6 +159,284 @@
 
   renderizarCategorias();
   renderizarProdutos();
+
+  // − / + nos cards e botão "Adicionar"
+  /* O seletor do card fica sempre igual à quantidade no carrinho:
+     - produto fora do carrinho: escolha a quantidade e toque em "Adicionar"
+     - produto já no carrinho: − / + e o número digitado mudam o carrinho na hora */
+
+  function sincronizarCards(qtdNoCarrinho) {
+    listaProdutos.querySelectorAll('.lp-card').forEach(function (card) {
+      var id = card.getAttribute('data-id');
+      var qtd = qtdNoCarrinho(id);
+      var campo = card.querySelector('.qty__input');
+      var botao = card.querySelector('[data-add]');
+      var noCarrinho = qtd > 0;
+      card.classList.toggle('is-in-cart', noCarrinho);
+      if (noCarrinho && document.activeElement !== campo) campo.value = qtd;
+      if (!noCarrinho && card.getAttribute('data-estava') === '1') campo.value = 1;
+      card.setAttribute('data-estava', noCarrinho ? '1' : '0');
+      botao.lastChild.textContent = noCarrinho ? ' No carrinho' : ' Adicionar';
+      botao.setAttribute('aria-label', noCarrinho ? 'Ver carrinho' : 'Adicionar ao carrinho');
+    });
+  }
+
+  listaProdutos.addEventListener('click', function (e) {
+    var card = e.target.closest('.lp-card');
+    if (!card) return;
+    var id = card.getAttribute('data-id');
+    var campo = card.querySelector('.qty__input');
+    var noCarrinho = Carrinho.qtdDe(id) > 0;
+
+    var passo = e.target.closest('[data-qtd]');
+    if (passo) {
+      var nova = limitarQtd(Number(campo.value) + Number(passo.getAttribute('data-qtd')));
+      campo.value = nova;
+      if (noCarrinho) Carrinho.definir(id, nova);
+      return;
+    }
+
+    if (e.target.closest('[data-add]')) {
+      if (noCarrinho) Carrinho.abrir();
+      else Carrinho.adicionar(id, limitarQtd(campo.value));
+    }
+  });
+
+  // Número digitado no card
+  listaProdutos.addEventListener('change', function (e) {
+    if (!e.target.classList.contains('qty__input')) return;
+    var campo = e.target;
+    campo.value = limitarQtd(campo.value);
+    var id = campo.closest('.lp-card').getAttribute('data-id');
+    if (Carrinho.qtdDe(id) > 0) Carrinho.definir(id, campo.value);
+  });
+
+
+  /* ================= Carrinho ================= */
+
+  var Carrinho = (function () {
+    var salvo = lerJSON(STORAGE_CARRINHO, {});
+    var itens = (salvo.itens || []).filter(function (i) { return produtoPorId(i.id); });
+    var cupom = FORMATO_CUPOM.test(salvo.cupom || '') ? salvo.cupom : '';
+
+    var painel = document.getElementById('cart');
+    var fundo = document.getElementById('cart-overlay');
+    var lista = document.getElementById('cart-itens');
+    var vazio = document.getElementById('cart-vazio');
+    var rodape = document.getElementById('cart-rodape');
+    var contadores = document.querySelectorAll('[data-cart-count]');
+    var campoCupom = document.getElementById('cart-cupom');
+    var msgCupom = document.getElementById('cart-cupom-msg');
+    var blocoAplicado = document.getElementById('cart-cupom-ok');
+    var blocoCampo = document.getElementById('cart-cupom-form');
+    var finalizar = document.getElementById('cart-finalizar');
+    var ultimoFoco = null;
+
+    function salvar() { gravarJSON(STORAGE_CARRINHO, { itens: itens, cupom: cupom }); }
+
+    // Contas em centavos para não errar arredondamento
+    function totais() {
+      var subtotal = itens.reduce(function (soma, i) {
+        return soma + Math.round(produtoPorId(i.id).preco * 100) * i.qtd;
+      }, 0);
+      var desconto = cupom ? Math.round(subtotal * DESCONTO) : 0;
+      return { subtotal: subtotal / 100, desconto: desconto / 100, total: (subtotal - desconto) / 100 };
+    }
+
+    function quantidadeTotal() {
+      return itens.reduce(function (s, i) { return s + i.qtd; }, 0);
+    }
+
+    function linhaItem(i) {
+      var p = produtoPorId(i.id);
+      return (
+        '<li class="cart-item" data-id="' + escapar(p.id) + '">' +
+          '<img class="cart-item__img" src="' + escapar(p.imagem) + '" alt="" />' +
+          '<div class="cart-item__info">' +
+            '<div class="cart-item__name">' + escapar(p.nome) + '</div>' +
+            '<div class="cart-item__unit">' + formatarPreco(p.preco) + ' cada</div>' +
+            '<div class="cart-item__row">' +
+              seletorQtd(i.qtd, 'Quantidade de ' + p.nome) +
+              '<strong class="cart-item__sub">' + formatarPreco(p.preco * i.qtd) + '</strong>' +
+            '</div>' +
+          '</div>' +
+          '<button type="button" class="cart-item__remove" data-remover aria-label="Remover ' + escapar(p.nome) + '">' +
+            '<svg width="18" height="18" aria-hidden="true"><use href="#i-trash" /></svg>' +
+          '</button>' +
+        '</li>'
+      );
+    }
+
+    function qtdDe(id) {
+      var item = itens.find(function (i) { return i.id === id; });
+      return item ? item.qtd : 0;
+    }
+
+    function renderizar() {
+      sincronizarCards(qtdDe);
+      var qtd = quantidadeTotal();
+      contadores.forEach(function (el) { el.textContent = qtd; el.hidden = qtd === 0; });
+
+      lista.innerHTML = itens.map(linhaItem).join('');
+      vazio.hidden = itens.length > 0;
+      rodape.hidden = itens.length === 0;
+
+      var t = totais();
+      document.getElementById('cart-subtotal').textContent = formatarPreco(t.subtotal);
+      document.getElementById('cart-desconto-linha').hidden = !cupom;
+      document.getElementById('cart-desconto').textContent = '− ' + formatarPreco(t.desconto);
+      document.getElementById('cart-desconto-rotulo').textContent =
+        'Desconto ' + Math.round(DESCONTO * 100) + '% (' + cupom + ')';
+      document.getElementById('cart-total').textContent = formatarPreco(t.total);
+
+      blocoAplicado.hidden = !cupom;
+      blocoCampo.hidden = !!cupom;
+      document.getElementById('cart-cupom-aplicado').textContent = cupom;
+      document.getElementById('cart-cupom-dica').hidden = !!cupom;
+
+      finalizar.href = itens.length ? linkWhatsApp(mensagemPedido()) : '#';
+    }
+
+    function mensagemPedido() {
+      var t = totais();
+      var linhas = itens.map(function (i) {
+        var p = produtoPorId(i.id);
+        return '• ' + i.qtd + 'x ' + p.nome + ' — ' + formatarPreco(p.preco * i.qtd);
+      });
+      return 'Olá, VTT Store! Quero fazer este pedido pelo site:\n\n' +
+        linhas.join('\n') + '\n\n' +
+        'Subtotal: ' + formatarPreco(t.subtotal) + '\n' +
+        (cupom ? 'Cupom ' + cupom + ' (' + Math.round(DESCONTO * 100) + '% OFF): − ' + formatarPreco(t.desconto) + '\n' : '') +
+        '*Total: ' + formatarPreco(t.total) + '*\n\n' +
+        'Pode me passar os tamanhos e cores disponíveis?';
+    }
+
+    function mensagemCupom(texto, tipo) {
+      msgCupom.textContent = texto || '';
+      msgCupom.hidden = !texto;
+      msgCupom.className = 'cart__cupom-msg' + (tipo ? ' is-' + tipo : '');
+      campoCupom.setAttribute('aria-invalid', tipo === 'erro' ? 'true' : 'false');
+    }
+
+    function aplicarCupom() {
+      var codigo = campoCupom.value.trim().toUpperCase().replace(/\s+/g, '');
+      if (!codigo) return mensagemCupom('Cole o código que você recebeu no cadastro.', 'erro');
+      if (!FORMATO_CUPOM.test(codigo)) {
+        return mensagemCupom('Código inválido. Confira se colou o código completo, ex.: VTT10-AB3K9.', 'erro');
+      }
+      cupom = codigo;
+      campoCupom.value = '';
+      mensagemCupom('');
+      salvar();
+      renderizar();
+    }
+
+    function abrir() {
+      ultimoFoco = document.activeElement;
+      fundo.hidden = false;
+      painel.hidden = false;
+      document.body.classList.add('cart-aberto');
+      document.getElementById('toast').hidden = true;
+      document.getElementById('cart-fechar').focus();
+    }
+
+    function fechar() {
+      fundo.hidden = true;
+      painel.hidden = true;
+      document.body.classList.remove('cart-aberto');
+      if (ultimoFoco && ultimoFoco.focus) ultimoFoco.focus({ preventScroll: true });
+    }
+
+    function mudarQtd(id, qtd) {
+      var item = itens.find(function (i) { return i.id === id; });
+      if (item) item.qtd = limitarQtd(qtd);
+      salvar();
+      renderizar();
+    }
+
+    /* Eventos */
+    document.querySelectorAll('[data-cart-open]').forEach(function (b) {
+      b.addEventListener('click', function (e) { e.preventDefault(); abrir(); });
+    });
+    document.querySelectorAll('[data-cart-close]').forEach(function (b) {
+      b.addEventListener('click', fechar);
+    });
+    fundo.addEventListener('click', fechar);
+    document.addEventListener('keydown', function (e) {
+      if (e.key === 'Escape' && !painel.hidden) fechar();
+    });
+
+    lista.addEventListener('click', function (e) {
+      var linha = e.target.closest('.cart-item');
+      if (!linha) return;
+      var id = linha.getAttribute('data-id');
+      var passo = e.target.closest('[data-qtd]');
+      if (passo) {
+        var item = itens.find(function (i) { return i.id === id; });
+        var nova = item.qtd + Number(passo.getAttribute('data-qtd'));
+        if (nova < 1) return;
+        mudarQtd(id, nova);
+        var botao = lista.querySelector('.cart-item[data-id="' + id + '"] [data-qtd="' + passo.getAttribute('data-qtd') + '"]');
+        if (botao) botao.focus();
+        return;
+      }
+      if (e.target.closest('[data-remover]')) {
+        itens = itens.filter(function (i) { return i.id !== id; });
+        salvar();
+        renderizar();
+        document.getElementById('cart-fechar').focus();
+      }
+    });
+
+    lista.addEventListener('change', function (e) {
+      if (!e.target.classList.contains('qty__input')) return;
+      mudarQtd(e.target.closest('.cart-item').getAttribute('data-id'), e.target.value);
+    });
+
+    document.getElementById('cart-cupom-aplicar').addEventListener('click', aplicarCupom);
+    campoCupom.addEventListener('keydown', function (e) {
+      if (e.key === 'Enter') { e.preventDefault(); aplicarCupom(); }
+    });
+    campoCupom.addEventListener('input', function () { mensagemCupom(''); });
+
+    document.getElementById('cart-cupom-remover').addEventListener('click', function () {
+      cupom = '';
+      mensagemCupom('');
+      salvar();
+      renderizar();
+      campoCupom.focus();
+    });
+
+    finalizar.addEventListener('click', function (e) {
+      if (!itens.length) e.preventDefault();
+    });
+
+    renderizar();
+
+    return {
+      qtdDe: qtdDe,
+      abrir: abrir,
+      definir: mudarQtd,
+      adicionar: function (id, qtd) {
+        var item = itens.find(function (i) { return i.id === id; });
+        if (item) item.qtd = limitarQtd(item.qtd + qtd);
+        else itens.push({ id: id, qtd: qtd });
+        salvar();
+        renderizar();
+        avisar(produtoPorId(id).nome + ' no carrinho');
+      },
+    };
+  })();
+
+  // Aviso rápido no rodapé da tela
+  var toast = document.getElementById('toast');
+  var toastTimer;
+  function avisar(texto) {
+    toast.querySelector('span').textContent = texto;
+    toast.hidden = false;
+    clearTimeout(toastTimer);
+    toastTimer = setTimeout(function () { toast.hidden = true; }, 2600);
+  }
 
 
   /* ================= API de cadastro ================= */
@@ -251,20 +558,46 @@
     }
   }
 
-  function mensagemDesconto(lead) {
-    return 'Olá, VTT Store! Acabei de me cadastrar no site e quero usar meu desconto de 10% na primeira compra.\n\n' +
-      '*Cupom:* ' + lead.cupom + '\n' +
-      '*E-mail:* ' + lead.email + '\n' +
-      '*WhatsApp:* ' + mascaraCelular(lead.whatsapp) + '\n\n' +
-      'Pode me ajudar a escolher os produtos?';
-  }
-
   function mostrarSucesso(lead) {
     document.getElementById('lead-cupom').textContent = lead.cupom;
-    document.getElementById('btn-usar-desconto').href = linkWhatsApp(mensagemDesconto(lead));
+    botaoCopiar.querySelector('span').textContent = 'Copiar código';
+    botaoCopiar.classList.remove('is-copied');
     form.hidden = true;
     telaSucesso.hidden = false;
   }
+
+  /* ---------- Botão "Copiar código" ---------- */
+
+  var botaoCopiar = document.getElementById('btn-copiar-cupom');
+
+  function copiarTexto(texto) {
+    if (navigator.clipboard && window.isSecureContext) {
+      return navigator.clipboard.writeText(texto);
+    }
+    // Plano B para navegadores antigos / páginas sem https
+    return new Promise(function (ok, falha) {
+      var area = document.createElement('textarea');
+      area.value = texto;
+      area.setAttribute('readonly', '');
+      area.style.position = 'fixed';
+      area.style.opacity = '0';
+      document.body.appendChild(area);
+      area.select();
+      try { document.execCommand('copy') ? ok() : falha(); } catch (e) { falha(e); }
+      document.body.removeChild(area);
+    });
+  }
+
+  botaoCopiar.addEventListener('click', function () {
+    var codigo = document.getElementById('lead-cupom').textContent;
+    var rotulo = botaoCopiar.querySelector('span');
+    copiarTexto(codigo).then(function () {
+      rotulo.textContent = 'Código copiado!';
+      botaoCopiar.classList.add('is-copied');
+    }).catch(function () {
+      rotulo.textContent = 'Selecione o código acima e copie';
+    });
+  });
 
   function mostrarFormulario() {
     form.reset();

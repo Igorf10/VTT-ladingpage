@@ -23,6 +23,11 @@
           <a href="#produtos">Produtos</a>
           <a href="#cadastro">10% OFF</a>
         </nav>
+        <button type="button" class="lp-top__cart" data-cart-open aria-label="Abrir carrinho">
+          <svg width="22" height="22" aria-hidden="true"><use href="#i-cart" /></svg>
+          <span class="lp-top__cart-label">Carrinho</span>
+          <span class="cart-count" data-cart-count hidden>0</span>
+        </button>
         <a href="#" class="btn lp-btn-whats lp-top__whats" data-whats="pedido" target="_blank" rel="noopener noreferrer">
           <svg class="ico-whats" width="16" height="16" aria-hidden="true"><use href="#i-whats" /></svg>
           <span>Peça já aqui</span>
@@ -40,7 +45,7 @@
           <h1 class="hero__title">Vista o treino.<br /><span>Vista a VTT.</span></h1>
           <p class="hero__text">
             Camisas, shorts de compressão, leggings, moletons e corta vento com a marca
-            da equipe. Escolha a peça e feche o pedido em minutos pelo WhatsApp.
+            da equipe. Monte seu carrinho e feche o pedido em minutos pelo WhatsApp.
           </p>
           <div class="lp-hero__actions">
             <a href="#produtos" class="btn btn-primary">Ver produtos</a>
@@ -90,12 +95,12 @@
             <h3 class="lp-form__title">Você está na lista VTT!</h3>
             <p class="lp-form__text">Seu cupom de 10% OFF na primeira compra:</p>
             <div class="lp-cupom" id="lead-cupom"></div>
+            <button type="button" class="btn btn-primary" id="btn-copiar-cupom">
+              <svg width="18" height="18" aria-hidden="true"><use href="#i-copy" /></svg> <span>Copiar código</span>
+            </button>
             <p class="lp-form__text">
-              Toque no botão abaixo: a mensagem com seu cupom já vai pronta para o WhatsApp da loja.
+              Cole o código no carrinho, no campo “Código promocional”, para ganhar 10% de desconto.
             </p>
-            <a href="#" class="btn lp-btn-whats" id="btn-usar-desconto" target="_blank" rel="noopener noreferrer">
-              <svg width="18" height="18" aria-hidden="true"><use href="#i-whats" /></svg> Usar meu desconto
-            </a>
             <a href="#produtos" class="lp-form__link">Ver os produtos</a>
             <button type="button" class="lp-form__reset" id="lead-reset">Fazer outro cadastro</button>
           </div>
@@ -129,7 +134,7 @@
     <section class="section container" id="produtos">
       <div class="section__head">
         <h2 class="section__title">Produtos disponíveis</h2>
-        <p class="section__hint">Toque em “Comprar no WhatsApp” e a mensagem já vai com o produto e o preço.</p>
+        <p class="section__hint">Escolha a quantidade, adicione ao carrinho e finalize o pedido pelo WhatsApp.</p>
       </div>
 
       <!-- Botões de categoria: gerados pelo js/main.js -->
@@ -146,15 +151,15 @@
         <ol class="lp-steps__list">
           <li class="lp-step">
             <span class="lp-step__n">01</span>
-            <div><h3 class="lp-step__title">Escolha a peça</h3><p class="lp-step__text">Filtre pela categoria e veja o preço de cada modelo.</p></div>
+            <div><h3 class="lp-step__title">Monte o carrinho</h3><p class="lp-step__text">Escolha as peças e a quantidade de cada uma.</p></div>
           </li>
           <li class="lp-step">
             <span class="lp-step__n">02</span>
-            <div><h3 class="lp-step__title">Chame no WhatsApp</h3><p class="lp-step__text">O botão já abre a conversa com o produto escolhido.</p></div>
+            <div><h3 class="lp-step__title">Aplique seu cupom</h3><p class="lp-step__text">Cole o código do cadastro no carrinho e o desconto entra no total.</p></div>
           </li>
           <li class="lp-step">
             <span class="lp-step__n">03</span>
-            <div><h3 class="lp-step__title">Combine e receba</h3><p class="lp-step__text">Tamanho, cor, pagamento e entrega direto com a equipe.</p></div>
+            <div><h3 class="lp-step__title">Finalize no WhatsApp</h3><p class="lp-step__text">O pedido vai pronto. Tamanho, cor, pagamento e entrega você combina com a equipe.</p></div>
           </li>
         </ol>
       </div>
@@ -178,6 +183,65 @@
       </div>
     </footer>
 
+    <!-- ================= Carrinho (janela lateral) ================= -->
+    <div class="cart-overlay" id="cart-overlay" hidden></div>
+    <aside class="cart" id="cart" role="dialog" aria-modal="true" aria-labelledby="cart-titulo" hidden>
+      <header class="cart__head">
+        <h2 class="cart__title" id="cart-titulo">Seu carrinho</h2>
+        <button type="button" class="cart__close" id="cart-fechar" data-cart-close aria-label="Fechar carrinho">
+          <svg width="22" height="22" aria-hidden="true"><use href="#i-close" /></svg>
+        </button>
+      </header>
+
+      <div class="cart__body">
+        <ul class="cart__list" id="cart-itens"></ul>
+        <div class="cart__empty" id="cart-vazio">
+          <svg width="40" height="40" aria-hidden="true"><use href="#i-cart" /></svg>
+          <p>Seu carrinho está vazio.</p>
+          <a href="#produtos" class="btn btn-outline" data-cart-close>Ver produtos</a>
+        </div>
+      </div>
+
+      <footer class="cart__foot" id="cart-rodape" hidden>
+        <!-- Código promocional -->
+        <div class="cart__cupom">
+          <div id="cart-cupom-form">
+            <label for="cart-cupom" class="cart__cupom-label">Código promocional</label>
+            <div class="cart__cupom-row">
+              <input id="cart-cupom" type="text" autocomplete="off" autocapitalize="characters" spellcheck="false"
+                     placeholder="Ex.: VTT10-AB3K9" aria-describedby="cart-cupom-msg" />
+              <button type="button" class="btn btn-outline" id="cart-cupom-aplicar">Aplicar</button>
+            </div>
+          </div>
+          <div class="cart__cupom-ok" id="cart-cupom-ok" hidden>
+            <svg width="18" height="18" aria-hidden="true"><use href="#i-check" /></svg>
+            <span>Cupom <strong id="cart-cupom-aplicado"></strong> aplicado</span>
+            <button type="button" class="cart__cupom-remove" id="cart-cupom-remover">Remover</button>
+          </div>
+          <p class="cart__cupom-msg" id="cart-cupom-msg" role="status" hidden></p>
+          <p class="cart__cupom-hint" id="cart-cupom-dica">Ainda não tem? <a href="#cadastro" data-cart-close>Cadastre-se e ganhe 10%</a>.</p>
+        </div>
+
+        <dl class="cart__sum">
+          <div><dt>Subtotal</dt><dd id="cart-subtotal"></dd></div>
+          <div class="cart__sum-desc" id="cart-desconto-linha" hidden><dt id="cart-desconto-rotulo">Desconto</dt><dd id="cart-desconto"></dd></div>
+          <div class="cart__sum-total"><dt>Total</dt><dd id="cart-total"></dd></div>
+        </dl>
+
+        <a href="#" class="btn lp-btn-whats cart__checkout" id="cart-finalizar" target="_blank" rel="noopener noreferrer">
+          <svg width="18" height="18" aria-hidden="true"><use href="#i-whats" /></svg> Finalizar pedido no WhatsApp
+        </a>
+        <button type="button" class="cart__continue" data-cart-close>Continuar comprando</button>
+      </footer>
+    </aside>
+
+    <!-- Aviso "adicionado ao carrinho" -->
+    <div class="toast" id="toast" role="status" hidden>
+      <svg width="18" height="18" aria-hidden="true"><use href="#i-check" /></svg>
+      <span></span>
+      <button type="button" class="toast__link" data-cart-open>Ver carrinho</button>
+    </div>
+
     <!-- WhatsApp flutuante -->
     <a href="#" class="lp-float" data-whats="duvida" target="_blank" rel="noopener noreferrer" aria-label="Falar no WhatsApp">
       <svg width="28" height="28" aria-hidden="true"><use href="#i-whats" /></svg>
@@ -190,6 +254,19 @@
       <!-- Ícone estilizado do WhatsApp (não é o logo oficial) -->
       <symbol id="i-whats" viewBox="0 0 24 24">
         <path fill="currentColor" d="M12.04 2C6.58 2 2.13 6.45 2.13 11.91c0 1.75.46 3.39 1.26 4.81L2 22l5.41-1.36a9.9 9.9 0 0 0 4.63 1.15h.01c5.46 0 9.9-4.45 9.9-9.91C21.96 6.45 17.51 2 12.04 2zm0 18.02h-.01a8.1 8.1 0 0 1-4.13-1.13l-.3-.18-3.07.77.82-2.99-.2-.31a8.13 8.13 0 0 1-1.25-4.28c0-4.5 3.66-8.16 8.15-8.16 2.18 0 4.22.85 5.76 2.4a8.09 8.09 0 0 1 2.39 5.77c0 4.5-3.67 8.11-8.16 8.11zm4.47-6.1c-.24-.12-1.44-.71-1.66-.79-.22-.08-.39-.12-.55.12-.16.24-.63.79-.78.95-.14.16-.29.18-.53.06-.24-.12-1.03-.38-1.96-1.21-.72-.65-1.21-1.44-1.35-1.68-.14-.24-.02-.37.11-.49.11-.11.24-.29.36-.43.12-.14.16-.24.24-.4.08-.16.04-.31-.02-.43-.06-.12-.55-1.33-.76-1.82-.2-.48-.4-.42-.55-.42-.14-.01-.31-.01-.47-.01-.16 0-.43.06-.65.31-.22.24-.86.84-.86 2.05 0 1.21.88 2.38 1 2.54.12.16 1.73 2.64 4.19 3.7.59.25 1.04.4 1.4.52.59.19 1.12.16 1.54.1.47-.07 1.44-.59 1.64-1.15.2-.57.2-1.05.14-1.15-.06-.1-.22-.16-.46-.28z" />
+      </symbol>
+      <symbol id="i-cart" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <circle cx="8" cy="21" r="1" /><circle cx="19" cy="21" r="1" />
+        <path d="M2.05 2.05h2l2.66 12.42a2 2 0 0 0 2 1.58h9.78a2 2 0 0 0 1.95-1.57l1.65-7.43H5.12" />
+      </symbol>
+      <symbol id="i-copy" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <rect width="14" height="14" x="8" y="8" rx="2" /><path d="M4 16c-1.1 0-2-.9-2-2V4c0-1.1.9-2 2-2h10c1.1 0 2 .9 2 2" />
+      </symbol>
+      <symbol id="i-trash" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M3 6h18" /><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6" /><path d="M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2" />
+      </symbol>
+      <symbol id="i-close" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M18 6 6 18" /><path d="m6 6 12 12" />
       </symbol>
       <symbol id="i-check" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
         <circle cx="12" cy="12" r="10" /><path d="m9 12 2 2 4-4" />

@@ -6,5 +6,8 @@ window.VTT_CONFIG = {
 
   // URL do Web App do Google Apps Script (termina em /exec).
   // Enquanto estiver vazia, o cadastro é só simulado e aparece no console (F12).
-  leadsUrl: 'https://script.google.com/macros/s/AKfycbyYh0gGfIpvCoVhTN5TfkyHiuf0kxEDViEwI0VE0s4udFxlhOuoMBEBAJm4WBD0sZNl3A/exec',
+  // Desconto aplicado no carrinho quando o cliente cola o cupom do cadastro
+  descontoPercentual: 10,
+
+  leadsUrl: 'https://script.google.com/macros/s/AKfycbyCMLCClUloXW-evdEigfkldmKqHp9oiPE3H7x_pWFJVA58z4uUIgATMyruv7A4nWF_Sw/exec',
 };
